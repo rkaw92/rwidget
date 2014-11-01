@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script type="text/javascript" src="prototype.js"></script>
+		<script>
+			window.document.addEventListener('DOMContentLoaded', function(){
+				var demoContainer = window.document.querySelector('#demo');
+				
+				function ActiveInactiveWidget(container){
+					this.input = window.document.createElement('input');
+					this.input.setAttribute('type', 'text');
+					this.input.setAttribute('disabled', 'disabled');
+					
+					var enabled = false;
+					var input = this.input;
+					
+					function enableInput(){
+						input.removeAttribute('disabled');
+					}
+					
+					function disableInput(){
+						input.setAttribute('disabled', 'disabled');
+					}
+					
+					this.provides('toggle', {});
+					this.provide('toggle', function(inputData){
+						if(enabled){
+							disableInput();
+							enabled = false;
+						}
+						else{
+							enableInput();
+							enabled = true;
+						}
+					});
+					
+					container.appendChild(this.input);
+				}
+				ActiveInactiveWidget.prototype = Object.create(Widget.prototype);
+				
+				function ActivatorWidget(container){
+					this.input = window.document.createElement('button');
+					this.input.appendChild(window.document.createTextNode('Toggle'));
+					
+					this.emits('click', {});
+					this.input.addEventListener('click', (function(){
+						this.emit('click', {});
+					}).bind(this));
+					
+					container.appendChild(this.input);
+				}
+				ActivatorWidget.prototype = Object.create(Widget.prototype);
+				
+				
+				var input = new ActiveInactiveWidget(demoContainer);
+				var button = new ActivatorWidget(demoContainer);
+				
+				button.signal('click').connect(input.slot('toggle'));
+			});
+		</script>
+	</head>
+	<body>
+		<h1>Test form</h1>
+		<div id="demo">
+		</div>
+	</body>
+</html>
