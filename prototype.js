@@ -9,7 +9,7 @@ Signal.prototype.connect = function connect(slot){
 Signal.prototype.emit = function emit(data){
 	// TODO: Check the output structure against our specification.
 	this._connections.forEach(function(slot){
-		slot.run(data);
+		slot(data);
 	});
 };
 
@@ -20,7 +20,7 @@ function prepareSignalConfig(){
 }
 
 function SignalProvider(){}
-SignalProvider.prototype.emits = function emits(signalName, outputStructure){
+SignalProvider.prototype._emits = function emits(signalName, outputStructure){
 	prepareSignalConfig.call(this);
 	//TODO: Actually place the output structure info in _signals.
 	this._signals[signalName] = new Signal(signalName, outputStructure);
@@ -40,17 +40,16 @@ SignalProvider.prototype.signal = function signal(signalName){
 
 
 function Slot(name, inputStructure, owner){
-	this._name = name;
-	this._inputStructure = inputStructure;
-	this._provider = null;
-	this._owner = owner;
-}
-Slot.prototype.run = function run(inputData){
-	//TODO: Verify the input data against the structure.
-	this._provider.call(this._owner, inputData);
-};
-Slot.prototype.setProvider = function setProvider(providerFunction){
-	this._provider = providerFunction;
+	var provider = null;
+	var slotFunction = function runSlot(inputData){
+		return provider.call(owner, inputData);
+	};
+	slotFunction.inputStructure = inputStructure;
+	slotFunction.setProvider = function setProvider(newProvider){
+		provider = newProvider;
+	};
+	
+	return slotFunction;
 }
 
 function prepareSlotConfig(){
@@ -60,12 +59,12 @@ function prepareSlotConfig(){
 }
 
 function SlotProvider(){}
-SlotProvider.prototype.provides = function provides(slotName, inputStructure){
+SlotProvider.prototype._exposes = function _provides(slotName, inputStructure){
 	prepareSlotConfig.call(this);
 	//TODO: Actually place the output structure info in _slots.
 	this._slots[slotName] = new Slot(inputStructure, inputStructure, this);
 };
-SlotProvider.prototype.provide = function provide(slotName, providerFunction){
+SlotProvider.prototype.expose = function expose(slotName, providerFunction){
 	if(!this._slots || !this._slots[slotName]){
 		throw new UnknownSlotError(provide);
 	}
@@ -97,3 +96,20 @@ function Widget(){
 
 mixin(SignalProvider.prototype, Widget.prototype);
 mixin(SlotProvider.prototype, Widget.prototype);
+
+Widget.prototype.describe = function describe(descriptionObject){
+	var signalDescriptions = descriptionObject.signals;
+	var slotDescriptions = descriptionObject.slots;
+	Object.keys(signalDescriptions || {}).forEach(function declareSignal(signalName){
+		var signalOutputStructure = signalDescriptions[signalName];
+		this._emits(signalName, signalOutputStructure);
+	}, this);
+	Object.keys(slotDescriptions || {}).forEach(function declareSlot(slotName){
+		var slotInputStructure = slotDescriptions[slotName];
+		this._exposes(slotName, slotInputStructure);
+	}, this);
+};
+
+Widget.connect = function connect(signal, slot){
+	return signal.connect(slot);
+};
