@@ -7,63 +7,75 @@
 		<!--<script type="text/javascript" src="widgetTypes.js"></script>-->
 		
 		<style type="text/css">
+			body {
+				background-color: #FFCC66;
+			}
 			button {
-				float: right;
-				clear: none;
+				width: 80px;
+				display: block;
 			}
 			button.working {
 				background-color: rgb(223, 117, 20);
 				color: white;
 			}
-			input {
-				float: left;
-				clear: none;
+			.pure-form label {
+				display: block;
+				margin-top: 12px;
+				margin-bottom: 12px;
+			}
+			label input {
+				margin-left: 24px;
+				
 			}
 			input[readonly] {
 				background-color: #CCCCCC;
 			}
-			#demo {
-				text-align: center;
+			.pure-g fieldset {
+				padding: 16px;
+				border: 1px solid white;
+				margin: 8px;
+			}
+			.pure-g fieldset legend {
+				border: 1px solid white;
+				padding: 8px;
+				margin-right: 16px;
+				margin-left: auto;
+				width: auto;
 			}
 		</style>
 		<script>
-			window.document.addEventListener('DOMContentLoaded', function(){
-				var demoContainer = window.document.querySelector('#demo');
+			window.document.addEventListener('DOMContentLoaded', function(){				
 				
-				function ActiveInactiveWidget(container){
+				function ActiveInactiveWidget(container, label){
 					this.input = container.ownerDocument.createElement('input');
 					this.input.setAttribute('type', 'text');
+					this.label = container.ownerDocument.createElement('label');
+					this.label.appendChild(container.ownerDocument.createTextNode(label));
+					this.label.appendChild(this.input);
 					
 					var enabled = false;
 					var input = this.input;
 					
-					function enableInput(){
-						input.removeAttribute('readonly');
-					}
-					
-					function disableInput(){
-						input.setAttribute('readonly', 'readonly');
-					}
-					
-					disableInput();
-					
-					this.expose('toggle', function(inputData){
+					function updateTextField(){
 						if(enabled){
-							disableInput();
-							enabled = false;
+							this.removeAttribute('readonly');
 						}
 						else{
-							enableInput();
-							enabled = true;
+							this.setAttribute('readonly', 'readonly');
 						}
+					}
+					
+					var textField = new MutableElement(input, updateTextField);
+					
+					this.expose('setEnabled', function(inputData){
+						enabled = inputData.enabled;
+						textField.update();
 					});
 					
-					container.appendChild(this.input);
+					textField.update();
+					container.appendChild(this.label);
 				}
 				ActiveInactiveWidget.prototype = Object.create(Widget.prototype);
-				ActiveInactiveWidget.prototype.describe({
-					slots: { toggle: null }
-				});
 				
 				function ActivatorWidget(container){
 					this.button = window.document.createElement('button');
@@ -87,18 +99,18 @@
 					}
 					
 					function toggle(event){
-						if(!unlocked){
-							this.button.childNodes[0].nodeValue = 'Save';
+						unlocked = !unlocked;
+						if(unlocked){
+							this.button.childNodes[0].nodeValue = 'Lock';
 						}
 						else{
 							this.button.childNodes[0].nodeValue = 'Unlock';
-							startWorking();
-							setTimeout(stopWorking, 1000);
 						}
-						unlocked = !unlocked;
 						event.preventDefault();
 						event.stopPropagation();
-						this.emit('click', {});
+						this.emit('stateChange', {
+							enabled: unlocked
+						});
 					}
 					
 					this.button.addEventListener('click', (function(event){
@@ -108,22 +120,33 @@
 					container.appendChild(this.button);
 				}
 				ActivatorWidget.prototype = Object.create(Widget.prototype);
-				ActivatorWidget.prototype.describe({
-					signals: { click: null }
+				
+				['#demo1', '#demo2', '#demo3'].forEach(function(selectorString){
+					var demoContainer = window.document.querySelector(selectorString);
+					var input = new ActiveInactiveWidget(demoContainer, 'First name');
+					var input2 = new ActiveInactiveWidget(demoContainer, 'Last name');
+					var activator = new ActivatorWidget(demoContainer);
+					
+					Widget.connect(activator.signal('stateChange'), input.slot('setEnabled'));
+					Widget.connect(activator.signal('stateChange'), input2.slot('setEnabled'));
 				});
-				
-				
-				var input = new ActiveInactiveWidget(demoContainer);
-				var button = new ActivatorWidget(demoContainer);
-				
-				Widget.connect(button.signal('click'), input.slot('toggle'));
 			});
 		</script>
 	</head>
 	<body>
 		<div class="pure-g">
 			<form class="pure-form pure-u-1 pure-u-md-1-3">
-				<fieldset id="demo">
+				<fieldset id="demo1">
+					<legend>Safety input switch</legend>
+				</fieldset>
+			</form>
+			<form class="pure-form pure-u-1 pure-u-md-1-3">
+				<fieldset id="demo2">
+					<legend>Safety input switch</legend>
+				</fieldset>
+			</form>
+			<form class="pure-form pure-u-1 pure-u-md-1-3">
+				<fieldset id="demo3">
 					<legend>Safety input switch</legend>
 				</fieldset>
 			</form>
