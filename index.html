@@ -22,13 +22,26 @@
 				display: block;
 				margin-top: 12px;
 				margin-bottom: 12px;
+				vertical-align: baseline;
 			}
 			label input {
-				margin-left: 24px;
+				margin-left: 12px;
 				
 			}
-			input[readonly] {
-				background-color: #CCCCCC;
+			.pure-form input[type=text] {
+				border: none;
+				border-bottom: 1px dotted black;
+			}
+			.pure-form input[type=text], .pure-form input[type=text][readonly] {
+				background-color: transparent;
+				border-radius: 0px;
+				box-shadow: none;
+				overflow: visible;
+				height: 1.0em;
+				padding: 0px;
+			}
+			.pure-form input[readonly] {
+				border: none;
 			}
 			.pure-g fieldset {
 				padding: 16px;
@@ -44,7 +57,7 @@
 			}
 		</style>
 		<script>
-			window.document.addEventListener('DOMContentLoaded', function(){				
+			window.document.addEventListener('DOMContentLoaded', function(){
 				
 				function ActiveInactiveWidget(container, label){
 					this.input = container.ownerDocument.createElement('input');
@@ -78,15 +91,15 @@
 				ActiveInactiveWidget.prototype = Object.create(Widget.prototype);
 				
 				function ActivatorWidget(container){
-					this.button = window.document.createElement('button');
-					this.button.setAttribute('type', 'button');
-					this.button.setAttribute('class', 'pure-button');
-					this.button.appendChild(window.document.createTextNode('Unlock'));
+					var button = window.document.createElement('button');
+					button.setAttribute('type', 'button');
+					button.setAttribute('class', 'pure-button');
+					button.appendChild(window.document.createTextNode('Unlock'));
+					this.button = button;
 					
 					var unlocked = false;
 					var working = false;
 					
-					var button = this.button;
 					
 					function startWorking(){
 						button.classList.add('working');

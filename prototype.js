@@ -57,6 +57,8 @@ SlotProvider.prototype.slot = function slot(slotName){
 	return this._slots[slotName].bind(this);
 };
 
+
+//TODO: Refactor the error types used by the message system.
 function UnknownSignalError(signalName){
 	Error.captureStackTrace(this, UnknownSignalError);
 };
